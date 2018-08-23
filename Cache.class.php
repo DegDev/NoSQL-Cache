@@ -24,7 +24,7 @@ namespace App\Cache;
  * 
  *   $cache->forget('some_key');
  * 
- *   $cache->store('example')->put('another_key',$value,$minutes);
+ *   $cache->store('path/to/cache-dir')->put('another_key',$value,$minutes);
  *
  *   print_r(Cache::store('example')->get('another_key'));
  *
