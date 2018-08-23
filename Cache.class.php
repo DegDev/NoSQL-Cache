@@ -6,20 +6,24 @@
 namespace App\Cache;
 
 /**
- *  Класс кэшированния данных.
+ * Класс кэшированния данных.
  * Предназначен для хранения результатов "дорогих" операций в json файлах
  * на сервере
  * 
  * <code>
  * <?php
  * use App\Cache; 
+ *   
  *   $cache = new Cache();
  *
  *   $cache->put('some_key',$value,$minutes);
+ * 
  *   $result = $cache->get('some_key')
+ * 
  *   print_r($result);
  * 
  *   $cache->forget('some_key');
+ * 
  *   $cache->store('example')->put('another_key',$value,$minutes);
  *
  *   print_r(Cache::store('example')->get('another_key'));
@@ -28,7 +32,8 @@ namespace App\Cache;
  * 
  * </code>
  */
-class Cache {
+class Cache
+{
     /**
      * Базовая директория для хранения кэша
      * @var string
@@ -43,7 +48,8 @@ class Cache {
 
     // Конструктор будет являтся точкой входа не зависимо от способа создания
     // обьекта
-    public function __construct($dir = null) {
+    public function __construct($dir = null)
+    {
         // Необходимо чтоб весь кэш хранился в одном месте.
         if (empty($dir)) {
             $this->dir = self::$baseDir;
@@ -74,7 +80,8 @@ class Cache {
      * @param string $directory ХРАНИЛИЩЕ - дирректория для работы с кэшем.
      * @return <b>Cache</b> Возвращает объект класса Cache
      */
-    public static function store($directory = null) {
+    public static function store($directory = null)
+    {
 
         return new Cache($directory);
     }
@@ -88,9 +95,10 @@ class Cache {
      * @throws Exception
      * @return bool <b>TRUE</b> если добавление в кэш прошло успешно <b>FALSE</b> в обратном случае
      */
-    public function put($key, array $value, $minutes) {
+    public function put($key, array $value, $minutes)
+    {
         //Если по любым причинам ключ пуст.
-        if(empty($key)){
+        if (empty($key)) {
             return false;
         }
         // Если директория для записи не существует то создать её
@@ -100,7 +108,7 @@ class Cache {
         // Добавить время жизни кэша в конец файла кэша
         $value = array_merge($value, ['expired' => $minutes * 60]);
         $file  = file_put_contents("{$this->dir}/{$key}.json",
-            json_encode($value,JSON_NUMERIC_CHECK));
+            json_encode($value, JSON_NUMERIC_CHECK));
         // Исключительная ошибка записи файла кэша
         if ($file === false) {
             throw new \Exception("Error writing cache file: {$this->dir}/{$key}.json");
@@ -115,7 +123,8 @@ class Cache {
      * @return array  Ассоциативный Массив<br>
      *                <b>null</b> если кэш просрочен или не существует
      */
-    public function get($key) {
+    public function get($key)
+    {
         // Если такой ключ не существует возвращем null
         if (!$this->has($key)) {
             return null;
@@ -129,7 +138,8 @@ class Cache {
      * @param string $key имя файла(ключа) кэша
      * @return bool <b>TRUE</b> если ключ существует <b>FALSE</b> в обратном случае
      */
-    public function has($key) {
+    public function has($key)
+    {
         // Кэш существует тогда и только тогда когда файл кэша существует и срок
         // жизни кэша не истёк.        
         if ($this->isExists($key) && !$this->isExpired($key)) {
@@ -148,7 +158,8 @@ class Cache {
      * @param  Closure $function  Функция ОТСРОЧЕННОГО вызова
      * @return array   Ассоциативный Массив
      */
-    public function remember($key, $minutes, \Closure $function) {
+    public function remember($key, $minutes, \Closure $function)
+    {
         if (!$this->has($key)) {
             $this->put($key, $function(), $minutes);
         }
@@ -162,7 +173,8 @@ class Cache {
      *
      * @return bool <b>TRUE</b> в случае успеха <b>FALSE</b> в обратном случае
      */
-    public function forget($key) {                
+    public function forget($key)
+    {
         if (!$this->isExists($key)) {
             return false;
         }
@@ -176,7 +188,8 @@ class Cache {
      *
      * @return bool <b>TRUE</b> если ключ существует <b>FALSE</b> в обратном случае
      */
-    public function pull($key) {
+    public function pull($key)
+    {
         // если ключа нет то вернём null        
         if (!$this->has($key)) {
             return null;
@@ -198,7 +211,8 @@ class Cache {
      * @param  int   $minutes Количество минут
      * @return bool <b>TRUE</b> если ключ был добавлен <b>FALSE</b> если такой ключ уже существует
      */
-    public function add($key, $value, $minutes) {
+    public function add($key, $value, $minutes)
+    {
         // Если ключ существовал
         if ($this->has($key)) {
             return false;
@@ -212,7 +226,8 @@ class Cache {
      * @throws Exception
      * @return bool <b>TRUE</b> если все файлы и вложенные папки были удалены 
      */
-    public function flush() {
+    public function flush()
+    {
         // НЕ допускается удаление корневой директории проекта.
         if ($this->dir == './') {
             throw new \Exception('Project Root directory can not be deleted');
@@ -228,7 +243,8 @@ class Cache {
      * @return bool <b>TRUE</b> если срок действия кэша истёк <b>FALSE</b> в обратном случае    
      */
     // Баг: невозможно ... вызывать get($key) в expired
-    private function isExpired($key) {
+    private function isExpired($key)
+    {
 
         $tmp         = $this->parseJSON("{$this->dir}/{$key}.json");
         // getJson //
@@ -245,7 +261,8 @@ class Cache {
      * @param string $key  Ключ(кэш-файл)
      * @return bool <b>TRUE</b> если файл кэша существует <b>FALSE</b> в обратном случае
      */
-    private function isExists($key) {
+    private function isExists($key)
+    {
         if (!file_exists("{$this->dir}/{$key}.json")) {
             return false;
         }
@@ -259,7 +276,8 @@ class Cache {
      * @throws Exception
      * @return bool <b>TRUE</b> если удаление успешно 
      */
-    private function deleteDir($dirPath) {
+    private function deleteDir($dirPath)
+    {
         if (!is_dir($dirPath)) {
             // Попытка удалить директорию которой не существует
             throw new \InvalidArgumentException("$dirPath must be a directory");
@@ -279,6 +297,7 @@ class Cache {
 
         return true;
     }
+
     /**
      * Извлекает JSON из файла и возвращает ввиде массива.
      *
@@ -286,7 +305,8 @@ class Cache {
      * @throws Exception
      * @return array ассоциативный массив 
      */
-    private function parseJSON($path) {
+    private function parseJSON($path)
+    {
         $file = file_get_contents($path);
         // Исключительная ошибка чтения файла кэша
         if ($file === false) {
